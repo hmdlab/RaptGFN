@@ -1,0 +1,30 @@
+defaults:
+  - task: ht_selex_template
+  - algorithm: mogfn
+  - tokenizer: aptamer
+  - _self_
+
+# Supply dataset inputs explicitly; no dataset-specific paths are bundled.
+seed: null
+trial_id: 0
+project_name: raptgfn
+version: v0.1.0
+wandb_mode: disabled
+data_dir: ./outputs
+exp_name: ${hydra:runtime.choices.task}
+group_name: ${hydra:runtime.choices.task}
+exp_tags: []
+job_name: null
+timestamp: ${now:%Y-%m-%d_%H-%M-%S}
+log_dir: ${data_dir}/${exp_name}
+
+algorithm:
+  total_train_steps: ${algorithm.train_steps}
+  state_save_path: ${hydra:runtime.output_dir}/state.pkl.gz
+
+hydra:
+  run:
+    dir: ${log_dir}
+  sweep:
+    dir: ${log_dir}
+    subdir: .

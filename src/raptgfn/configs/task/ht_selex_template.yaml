@@ -1,0 +1,39 @@
+# Generic five-objective template. Supply your own approved inputs.
+# Required values intentionally have no dataset-specific defaults.
+_target_: raptgfn.tasks.simple_dna.SimpleDNATask
+objectives:
+  - kmer_freq_3
+  - kmer_enrich_3
+  - kmer_freq_5
+  - kmer_enrich_5
+  - rnafold_mfe
+kmer_objectives:
+  kmer_freq_3:
+    path: ???
+    k: 3
+    aggregation: geometric
+  kmer_enrich_3:
+    path: ???
+    k: 3
+    aggregation: geometric
+  kmer_freq_5:
+    path: ???
+    k: 5
+    aggregation: geometric
+  kmer_enrich_5:
+    path: ???
+    k: 5
+    aggregation: geometric
+min_kmer_reward: 1.0e-8
+rnafold_reward_scale: 1.0
+score_max: [1.0, 1.0, 1.0, 1.0, 1.0]
+min_len: ???
+max_len: ???
+ideal_length: ???
+regex_list: null
+num_start_examples: 512
+max_num_edits: null
+max_ngram_size: 1
+allow_len_change: true
+max_score_per_dim: 16
+offline_dataset_path: ???

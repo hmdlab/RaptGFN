@@ -1,0 +1,155 @@
+_target_: raptgfn.algorithms.mogfn.MOGFN
+_recursive_: false
+
+# Training configuration.
+train_steps: 5000
+total_train_steps: null  # Optional total target steps for resumed training.
+batch_size: 256
+pi_lr: 0.0001
+z_lr: 0.001
+wd: 0.0001
+# Partition-function stabilization.
+z_lr_scale: 1.0  # Multiplier applied to the log-Z optimizer learning rate.
+z_bias_init:
+  enabled: true   # Initialize the log-Z offset from early batches.
+  max_steps: 200  # Limit the initial bias adjustment to early training steps.
+z_anchor:
+  enabled: true
+  weight: 1.0e-4   # Anchor-regularization weight.
+  source: beta_logr_ema  # beta_logr_mean|beta_logr_ema
+
+# GFlowNet configuration.
+max_len: ${task.max_len}
+min_len: ${task.min_len}
+random_action_prob: 0.01
+sampling_temp: 1.0
+gen_clip: 10
+
+# Reward configuration.
+reward_min: 1e-8
+reward_max: 100
+reward_type: convex
+
+# Conditioning configuration.
+beta_use_therm: true
+pref_use_therm: true
+beta_cond: true
+pref_cond: true
+beta_scale: 1
+beta_shape: 32
+pref_alpha: 1.0
+beta_max: 32
+therm_n_bins: 50
+sample_beta: 4
+
+# Inverse-temperature scheduler.
+beta_scheduler:
+  enabled: true
+  mode: adaptive   # warmup|linear|cosine|adaptive
+  warmup_steps: 500
+  min_beta: 0.5
+  max_beta: 32
+  adaptive:
+    ema_decay: 0.99
+    target_logr: 1.0
+
+# Dirichlet concentration schedule.
+pref_alpha_schedule:
+  enabled: true
+  mode: linear     # linear|cosine
+  start: 1.0
+  end: 10.0
+  total_steps: ${algorithm.total_train_steps}
+
+# Legacy residual scaling and auxiliary prefix-residual settings.
+subtb:
+  enabled: true          # Enable the legacy squared-residual scaling branch.
+  true_enabled: true     # Enable the explicitly computed local prefix-residual branch.
+  weight: 0.05
+  use_all_prefixes: false
+  max_prefixes: 4
+
+# Sampling settings.
+sampling:
+  top_k: null
+  top_p: 0.95
+  temp_schedule:
+    enabled: true
+    mode: linear   # linear|cosine
+    start: 1.0
+    end: 0.9
+    total_steps: 1000  # Number of steps over which to change the sampling temperature.
+
+# Learned backward-policy settings.
+learn_backward:
+  enabled: true
+  lr_scale: 1.0
+
+# Internal training-time evaluation settings.
+eval_metrics: ["hypervolume", "r2", "hsri"]
+eval_freq: 50
+num_samples: 512
+k: 100
+simplex_bins: 10
+use_eval_pref: false
+num_pareto_points: 500
+pareto_freq: 200
+unnormalize_rewards: false
+
+# Set patience to null to disable early stopping.
+early_stop_patience: null
+early_stop_min_delta: 0.0
+
+# Optional output artifacts.
+artifacts:
+  enabled: true
+  dir: ${hydra:runtime.output_dir}
+  topk: 50
+
+# Algorithm-state output.
+state_save_path: "./outputs/mogfn_state.pkl.gz"
+
+# Checkpoint path, overridden by the generation entry point.
+checkpoint_path: null
+
+# Model configuration.
+model:
+  _target_: raptgfn.algorithms.conditional_transformer.CondGFNTransformer
+  max_len: ${algorithm.max_len}
+  vocab_size: 10  # Tokenizer vocabulary size.
+  num_actions: 5  # A, C, T, G + stop
+  num_hid: 256    # Hidden representation dimension.
+  num_layers: 8   # Number of Transformer layers.
+  num_head: 8     # Number of attention heads.
+  bidirectional: false  # Whether to enable bidirectional attention.
+  dropout: 0.1    # Dropout probability.
+  batch_size: 256
+  Z_type: linear  # linear|mlp|bias_only
+  Z_offset_enabled: false
+
+# Hybrid-learning settings.
+mle_coeff: 0.95                 # Coefficient of the offline maximum-likelihood loss.
+gfn_loss_coeff: 0.05             # Coefficient of the online trajectory-balance loss.
+offline_batch_size_ratio: 0.9   # Fraction of the minibatch drawn from offline data.
+
+# Schedules for loss coefficients and the offline mixing ratio.
+mle_coeff_schedule:
+  enabled: true
+  mode: linear     # linear|cosine
+  start: ${algorithm.mle_coeff}
+  end: 0.7
+  total_steps: ${algorithm.total_train_steps}
+
+gfn_loss_coeff_schedule:
+  enabled: true
+  mode: linear     # linear|cosine
+  start: ${algorithm.gfn_loss_coeff}
+  end: 0.15
+  total_steps: ${algorithm.total_train_steps}
+
+offline_batch_size_ratio_schedule:
+  enabled: true
+  mode: linear     # linear|cosine
+  start: ${algorithm.offline_batch_size_ratio}
+  end: 0.7
+  total_steps: ${algorithm.total_train_steps}

@@ -1,0 +1,9 @@
+include README.md LICENSE THIRD_PARTY_NOTICES.md requirements.txt
+recursive-include src *.py *.yaml
+prune .git
+prune data
+prune outputs
+prune results
+prune cache
+prune wandb
+global-exclude *.pyc *.pyo .DS_Store

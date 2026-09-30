@@ -1,0 +1,10 @@
+defaults:
+  - main
+  - _self_
+
+# Explicit checkpoint and sample-count arguments are required.
+checkpoint_path: ???
+num_samples: ???
+output_file: generated_sequences.csv
+pref: null
+wandb_mode: disabled
